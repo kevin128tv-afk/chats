@@ -1,31 +1,30 @@
 <script>
-const supabase = window.supabase.createClient(
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(
   "https://uihaiyhkyagubijjztio.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpaGFpeWhreWFndWJpamp6dGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NzI5MzAsImV4cCI6MjA5MTA0ODkzMH0.C2xnmnXbuWsOs6oS2LFV4NnDRIQn-H9PLJfAMyPEtV0"
+  "너 anon key"
 );
 
-async function send(){
+window.send = async function(){
   const name = document.getElementById("name").value || "익명";
-  const message = document.getElementById("msg").value;
+  const msgInput = document.getElementById("msg");
+  const message = msgInput.value;
 
   if(!message){
     alert("메시지 입력해");
     return;
   }
 
-  const { data, error } = await supabase
-    .from("chat")
-    .insert([{ name, message }])
-    .select();
-
-  console.log("data:", data);
-  console.log("error:", error);
+  const { error } = await supabase.from("chat").insert([
+    { name, message }
+  ]);
 
   if(error){
-    alert("🔥 에러: " + error.message);
+    alert("에러: " + error.message);
     return;
   }
 
-  alert("전송 성공");
-}
+  msgInput.value = "";
+};
 </script>
