@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>💬 채팅</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,28 +19,28 @@ body{
   padding:15px;
   text-align:center;
   font-weight:bold;
+  font-size:18px;
 }
 
 .chat{
-  height:80vh;
+  height:78vh;
   overflow:auto;
   padding:10px;
 }
 
 .msg{
   display:flex;
-  margin:6px 0;
+  margin:8px 0;
 }
 
-.me{
-  justify-content:flex-end;
-}
+.me{ justify-content:flex-end; }
 
 .bubble{
   padding:10px 14px;
   border-radius:15px;
   max-width:65%;
   font-size:14px;
+  word-break:break-word;
 }
 
 .me .bubble{
@@ -51,14 +52,15 @@ body{
 }
 
 .name{
-  font-size:12px;
-  color:#555;
+  font-size:11px;
+  color:#666;
 }
 
 .time{
   font-size:10px;
   color:gray;
   margin-top:2px;
+  text-align:right;
 }
 
 .input{
@@ -77,10 +79,11 @@ input{
 
 button{
   margin-left:5px;
-  padding:10px;
+  padding:10px 15px;
   border:none;
   border-radius:20px;
   background:#ffe812;
+  font-weight:bold;
   cursor:pointer;
 }
 </style>
@@ -104,34 +107,36 @@ const supabase = window.supabase.createClient(
 );
 
 const chat = document.getElementById("chat");
-
 let myName = "";
 
-// 전송
+// 🔥 메시지 보내기
 async function send(){
   const nameInput = document.getElementById("name");
   const msgInput = document.getElementById("msg");
 
   const name = nameInput.value || "익명";
-  const message = msgInput.value;
-
+  const message = msgInput.value.trim();
   if(!message) return;
 
   myName = name;
 
-  const { error } = await supabase.from("chat").insert([
-    { name, message }
-  ]);
+  const { data, error } = await supabase
+    .from("chat")
+    .insert([{ name, message }])
+    .select();
 
   if(error){
     alert("전송 실패: " + error.message);
     return;
   }
 
+  // 🔥 바로 화면에 추가
+  add(data[0]);
+
   msgInput.value = "";
 }
 
-// 추가
+// 🔥 메시지 화면 출력
 function add(data){
   const isMe = data.name === myName;
 
@@ -152,7 +157,7 @@ function add(data){
   chat.scrollTop = chat.scrollHeight;
 }
 
-// 불러오기
+// 🔥 기존 메시지 불러오기
 async function load(){
   const { data } = await supabase
     .from("chat")
@@ -162,7 +167,7 @@ async function load(){
   data.forEach(add);
 }
 
-// 실시간
+// 🔥 실시간 채팅
 supabase
   .channel("chat")
   .on(
@@ -172,6 +177,7 @@ supabase
   )
   .subscribe();
 
+// 실행
 load();
 
 // 엔터 전송
