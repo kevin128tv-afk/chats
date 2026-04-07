@@ -1,107 +1,16 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>카톡 스타일 채팅</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-<style>
-body{margin:0;font-family:sans-serif;background:#b2c7d9;}
-.header{background:#ffe812;padding:15px;text-align:center;font-weight:bold;}
-.chat{height:80vh;overflow:auto;padding:10px;}
-.msg{display:flex;margin:5px;}
-.me{justify-content:flex-end;}
-.bubble{padding:10px;border-radius:15px;max-width:60%;}
-.me .bubble{background:#ffe812;}
-.other .bubble{background:white;}
-.name{font-size:12px;color:#555;}
-.time{font-size:10px;color:gray;}
-.input{display:flex;padding:10px;background:#eee;}
-input{flex:1;padding:10px;border:none;border-radius:20px;}
-button{margin-left:5px;padding:10px;border:none;border-radius:20px;background:#ffe812;}
-</style>
-</head>
-
-<body>
-
-<div class="header">💬 채팅</div>
-<div class="chat" id="chat"></div>
-
-<div class="input">
-  <input id="name" placeholder="닉네임" style="max-width:80px;">
-  <input id="msg" placeholder="메시지">
-  <button onclick="send()">전송</button>
-</div>
-
-<script>
-const supabase = window.supabase.createClient(
-  "https://uihaiyhkyagubijjztio.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpaGFpeWhreWFndWJpamp6dGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NzI5MzAsImV4cCI6MjA5MTA0ODkzMH0.C2xnmnXbuWsOs6oS2LFV4NnDRIQn-H9PLJfAMyPEtV0"
-);
-
-const chat = document.getElementById("chat");
-
-// 보내기
 async function send(){
   const name = document.getElementById("name").value || "익명";
   const message = document.getElementById("msg").value;
   if(!message) return;
 
-  await supabase.from("chat").insert([
+  const { error } = await supabase.from("chat").insert([
     { name, message }
   ]);
 
+  if(error){
+    alert("에러: " + error.message);
+    console.log(error);
+  }
+
   document.getElementById("msg").value = "";
 }
-
-// 추가
-function add(data){
-  const div = document.createElement("div");
-  div.className = "msg other";
-
-  const time = new Date(data.created_at).toLocaleTimeString();
-
-  div.innerHTML = `
-    <div>
-      <div class="name">${data.name}</div>
-      <div class="bubble">${data.message}</div>
-      <div class="time">${time}</div>
-    </div>
-  `;
-
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-// 불러오기
-async function load(){
-  const { data } = await supabase
-    .from("chat")
-    .select("*")
-    .order("created_at", { ascending: true });
-
-  data.forEach(msg => add(msg));
-}
-
-// 실시간
-supabase
-  .channel('chat')
-  .on('postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'chat' },
-    payload => {
-      add(payload.new);
-    }
-  )
-  .subscribe();
-
-load();
-
-// 엔터
-document.getElementById("msg").addEventListener("keypress", e=>{
-  if(e.key === "Enter") send();
-});
-</script>
-
-</body>
-</html>
